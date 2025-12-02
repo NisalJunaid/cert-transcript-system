@@ -28,7 +28,7 @@
             <div><strong>National ID:</strong> {{ $student->national_id ?? 'N/A' }}</div>
             <div><strong>Batch:</strong> {{ $student->batch_no ?? 'N/A' }} | Program: {{ $student->program ?? 'N/A' }} | Level: {{ $student->level ?? 'N/A' }}</div>
             <div><strong>Completed:</strong> {{ optional($transcript->completed_date)->format('Y-m-d') ?? 'Not set' }}</div>
-            <div><strong>CGPA:</strong> {{ $cgpa !== null ? rtrim(rtrim(number_format($cgpa, 2, '.', ''), '0'), '.') : 'N/A' }}</div>
+            <div><strong>CGPA:</strong> {{ $cgpa !== null ? number_format($cgpa, 2, '.', '') : 'N/A' }}</div>
         </div>
         <div class="modules">
             <table>

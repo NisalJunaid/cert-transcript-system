@@ -40,7 +40,7 @@ class TranscriptPdfGenerator
 
             return [
                 $transcript->id => [
-                    'cgpa' => $cgpa,
+                    'cgpa' => $cgpa !== null ? round($cgpa, 2) : null,
                     'total_credit' => $totalCredit,
                 ],
             ];
@@ -68,7 +68,7 @@ class TranscriptPdfGenerator
             return $transcript->cgpa !== null ? (float) $transcript->cgpa : null;
         }
 
-        return $weightedPoints / $countedCredits;
+        return round($weightedPoints / $countedCredits, 2);
     }
 
     private function gradePointFromGrade(?string $grade): ?int

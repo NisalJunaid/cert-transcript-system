@@ -22,6 +22,7 @@ class Transcript extends Model
         'completed_date' => 'date',
         'pass_with_distinction' => 'boolean',
         'deans_award' => 'boolean',
+        'cgpa' => 'decimal:2',
     ];
 
     public function student()

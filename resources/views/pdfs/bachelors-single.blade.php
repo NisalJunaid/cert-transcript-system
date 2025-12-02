@@ -49,7 +49,7 @@
                     <td><b>Completed on</b></td>
                     <td>{{ optional($transcript->completed_date)->format('Y-m-d') }}</td>
                     <td><b>CGPA</b></td>
-                    <td>{{ $cgpa !== null ? rtrim(rtrim(number_format($cgpa, 2, '.', ''), '0'), '.') : 'N/A' }}</td>
+                    <td>{{ $cgpa !== null ? number_format($cgpa, 2, '.', '') : 'N/A' }}</td>
                 </tr>
             </table>
         </div>

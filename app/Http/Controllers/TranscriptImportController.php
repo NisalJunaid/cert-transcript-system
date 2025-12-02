@@ -127,6 +127,7 @@ class TranscriptImportController extends Controller
 
             $cgpaFromSheet = $this->toNullableNumber($this->value($row, ['cgpa']));
             $computedCgpa = $countedCredits > 0 ? $weightedPoints / $countedCredits : $cgpaFromSheet;
+            $computedCgpa = $computedCgpa !== null ? round($computedCgpa, 2) : null;
             $transcript->update([
                 'cgpa' => $computedCgpa,
             ]);
@@ -243,7 +244,7 @@ class TranscriptImportController extends Controller
         }
 
         // Direct numeric strings (with comma or dot separators)
-        $normalized = $clean->replace(',', '.');
+        $normalized = (string) $clean->replace(',', '.');
         if (is_numeric($normalized)) {
             return (float) $normalized;
         }

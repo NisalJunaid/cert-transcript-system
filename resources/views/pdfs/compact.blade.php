@@ -22,7 +22,7 @@
     <div class="page">
         <h3>Transcript Summary - {{ $transcript->course->shortcode }}</h3>
         <div><strong>{{ $student->name }}</strong> ({{ $student->student_identifier ?? 'N/A' }})</div>
-        <div>CGPA: {{ $cgpa !== null ? rtrim(rtrim(number_format($cgpa, 2, '.', ''), '0'), '.') : 'N/A' }}</div>
+        <div>CGPA: {{ $cgpa !== null ? number_format($cgpa, 2, '.', '') : 'N/A' }}</div>
         <div class="modules" style="margin-top: 12px;">
             <table>
                 <thead>
