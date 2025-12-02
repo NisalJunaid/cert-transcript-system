@@ -15,8 +15,6 @@ class TranscriptPdfGenerator
         foreach ($transcripts as $transcript) {
             if ($template === 'compact') {
                 $this->renderCompact($pdf, $transcript);
-            } elseif ($template === 'bachelors-single') {
-                $this->renderBachelorsSingle($pdf, $transcript);
             } else {
                 $this->renderDefault($pdf, $transcript);
             }
@@ -119,104 +117,5 @@ class TranscriptPdfGenerator
                 $cursor = 50;
             }
         }
-    }
-
-    private function renderBachelorsSingle(SimplePdf $pdf, Transcript $transcript): void
-    {
-        $modules = $transcript->moduleResults
-            ->sortBy(['position', 'id'])
-            ->values();
-
-        $rowHeight = 16;
-        $marginLeft = 80;
-        $defaultTop = 140;
-        $usableRows = (int) floor(($pdf->height() - $defaultTop - 80) / $rowHeight);
-        $rowsPerColumn = max(1, $usableRows);
-        $modulesPerPage = $rowsPerColumn * 2;
-
-        $chunks = $modules->chunk($modulesPerPage);
-
-        foreach ($chunks as $chunkIndex => $pageModules) {
-            $page = $pdf->addPage();
-
-            $headerBottom = $this->renderBachelorsHeader($page, $transcript, $marginLeft);
-            $tableTop = max($defaultTop, $headerBottom + 20);
-
-            $leftModules = $pageModules->take($rowsPerColumn);
-            $rightModules = $pageModules->slice($rowsPerColumn, $rowsPerColumn);
-
-            $this->renderBachelorsColumns($page, $leftModules, $tableTop, $marginLeft, $rowHeight);
-            $this->renderBachelorsColumns($page, $rightModules, $tableTop, $marginLeft + 250, $rowHeight);
-
-            $isLastChunk = ($chunkIndex === ($chunks->count() - 1));
-            if ($isLastChunk) {
-                $rowsUsed = max($leftModules->count(), $rightModules->count());
-                $footerTop = $tableTop + ($rowsUsed + 2) * $rowHeight;
-                $this->renderBachelorsFooter($page, $transcript, $footerTop, $marginLeft);
-            }
-        }
-    }
-
-    private function renderBachelorsHeader(SimplePdfPage $page, Transcript $transcript, float $marginLeft): float
-    {
-        $student = $transcript->student;
-
-        $cursor = 70;
-        $page->addTextFromTop($marginLeft, $cursor, 'Name: ' . $student->name, 12);
-        $page->addTextFromTop($marginLeft + 200, $cursor, 'Passport No: ' . ($student->national_id ?? 'N/A'), 12);
-        $page->addTextFromTop($marginLeft + 400, $cursor, 'Student ID: ' . ($student->student_identifier ?? 'N/A'), 12);
-
-        $cursor += 18;
-        $page->addTextFromTop($marginLeft, $cursor, 'Programme: ' . ($student->program ?? $student->level ?? 'N/A'), 12);
-        $page->addTextFromTop($marginLeft + 200, $cursor, 'Completed on: ' . ($transcript->completed_date?->format('Y-m-d') ?? 'N/A'), 12);
-        $cgpa = $transcript->cgpa !== null ? number_format((float) $transcript->cgpa, 2) : 'N/A';
-        $page->addTextFromTop($marginLeft + 400, $cursor, 'CGPA: ' . $cgpa, 12);
-
-        return $cursor;
-    }
-
-    private function renderBachelorsColumns(SimplePdfPage $page, Collection $modules, float $tableTop, float $columnLeft, int $rowHeight): void
-    {
-        $headerTop = $tableTop;
-        $page->addTextFromTop($columnLeft, $headerTop, 'Module Code', 11);
-        $page->addTextFromTop($columnLeft + 80, $headerTop, 'Module Title', 11);
-        $page->addTextFromTop($columnLeft + 220, $headerTop, 'Grade', 11);
-        $page->addTextFromTop($columnLeft + 250, $headerTop, 'GP', 11);
-        $page->addTextFromTop($columnLeft + 280, $headerTop, 'CP', 11);
-
-        $cursor = $tableTop + $rowHeight;
-        foreach ($modules as $module) {
-            $page->addTextFromTop($columnLeft, $cursor, $module->code ?: '-', 10);
-            $page->addTextFromTop($columnLeft + 80, $cursor, $module->name ?: '-', 10);
-            $page->addTextFromTop($columnLeft + 220, $cursor, $module->grade ?: '-', 10);
-
-            $displayGp = '';
-            if ($module->gp !== null) {
-                $gpValue = is_numeric($module->gp) ? (float) $module->gp : $module->gp;
-                if (! in_array($gpValue, [0, '0', 'Exempt'], true)) {
-                    $displayGp = is_numeric($gpValue) ? rtrim(rtrim(number_format((float) $gpValue, 2, '.', ''), '0'), '.') : (string) $gpValue;
-                }
-            }
-            $page->addTextFromTop($columnLeft + 250, $cursor, $displayGp ?: '-', 10);
-
-            $displayCp = $module->cp !== null ? rtrim(rtrim((string) $module->cp, '0'), '.') : '-';
-            $page->addTextFromTop($columnLeft + 280, $cursor, $displayCp ?: '-', 10);
-
-            $cursor += $rowHeight;
-        }
-    }
-
-    private function renderBachelorsFooter(SimplePdfPage $page, Transcript $transcript, float $footerTop, float $marginLeft): void
-    {
-        $totalCredit = $transcript->moduleResults
-            ->sum(function ($module) {
-                return is_numeric($module->cp) ? (float) $module->cp : 0;
-            });
-
-        $displayCredits = $totalCredit > 0 ? rtrim(rtrim(number_format($totalCredit, 2, '.', ''), '0'), '.') : '360';
-
-        $page->addTextFromTop($marginLeft, $footerTop, 'Total credit points earned: ' . $displayCredits, 11);
-        $page->addTextFromTop($marginLeft, $footerTop + 16, 'Programme Duration: 3 Years', 11);
-        $page->addTextFromTop($marginLeft, $footerTop + 44, 'Serial no: ' . ($transcript->student->certificate_serial_number ?? 'N/A'), 8);
     }
 }

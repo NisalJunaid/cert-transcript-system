@@ -55,7 +55,6 @@
                         <select name="template" class="form-select">
                             <option value="default">Default</option>
                             <option value="compact">Compact</option>
-                            <option value="bachelors-single">Bachelors - Single</option>
                         </select>
                     </div>
                     <div class="col-md-6">
