@@ -45,7 +45,7 @@ class TranscriptPdfGenerator
             'National ID: ' . ($student->national_id ?? 'N/A'),
             'Batch: ' . ($student->batch_no ?? 'N/A') . ' | Program: ' . ($student->program ?? 'N/A') . ' | Level: ' . ($student->level ?? 'N/A'),
             'Completed: ' . ($transcript->completed_date?->format('Y-m-d') ?? 'Not set'),
-            'CGPA: ' . ($transcript->cgpa !== null ? number_format((float) $transcript->cgpa, 2) : 'N/A'),
+            'CGPA: ' . $this->displayCgpa($transcript),
             'Pass with Distinction: ' . ($transcript->pass_with_distinction ? 'Yes' : 'No'),
             'Dean\'s Award: ' . ($transcript->deans_award ? 'Yes' : 'No'),
         ];
@@ -97,7 +97,7 @@ class TranscriptPdfGenerator
         $student = $transcript->student;
         $page->addTextFromTop(40, $cursor, $student->name . ' (' . ($student->student_identifier ?? 'N/A') . ')', 12);
         $cursor += 16;
-        $page->addTextFromTop(40, $cursor, 'CGPA: ' . ($transcript->cgpa !== null ? number_format((float) $transcript->cgpa, 2) : 'N/A'), 12);
+        $page->addTextFromTop(40, $cursor, 'CGPA: ' . $this->displayCgpa($transcript), 12);
         $cursor += 16;
 
         $moduleLines = $transcript->moduleResults->map(function ($module, $index) {
@@ -171,8 +171,7 @@ class TranscriptPdfGenerator
         $cursor += 18;
         $page->addTextFromTop($marginLeft, $cursor, 'Programme: ' . ($student->program ?? $student->level ?? 'N/A'), 12);
         $page->addTextFromTop($marginLeft + 200, $cursor, 'Completed on: ' . ($transcript->completed_date?->format('Y-m-d') ?? 'N/A'), 12);
-        $cgpa = $transcript->cgpa !== null ? number_format((float) $transcript->cgpa, 2) : 'N/A';
-        $page->addTextFromTop($marginLeft + 400, $cursor, 'CGPA: ' . $cgpa, 12);
+        $page->addTextFromTop($marginLeft + 400, $cursor, 'CGPA: ' . $this->displayCgpa($transcript), 12);
 
         return $cursor;
     }
@@ -192,17 +191,8 @@ class TranscriptPdfGenerator
             $page->addTextFromTop($columnLeft + 80, $cursor, $module->name ?: '-', 10);
             $page->addTextFromTop($columnLeft + 220, $cursor, $module->grade ?: '-', 10);
 
-            $displayGp = '';
-            if ($module->gp !== null) {
-                $gpValue = is_numeric($module->gp) ? (float) $module->gp : $module->gp;
-                if (! in_array($gpValue, [0, '0', 'Exempt'], true)) {
-                    $displayGp = is_numeric($gpValue) ? rtrim(rtrim(number_format((float) $gpValue, 2, '.', ''), '0'), '.') : (string) $gpValue;
-                }
-            }
-            $page->addTextFromTop($columnLeft + 250, $cursor, $displayGp ?: '-', 10);
-
-            $displayCp = $module->cp !== null ? rtrim(rtrim((string) $module->cp, '0'), '.') : '-';
-            $page->addTextFromTop($columnLeft + 280, $cursor, $displayCp ?: '-', 10);
+            $page->addTextFromTop($columnLeft + 250, $cursor, $this->formatNumericField($module->gp), 10);
+            $page->addTextFromTop($columnLeft + 280, $cursor, $this->formatNumericField($module->cp), 10);
 
             $cursor += $rowHeight;
         }
@@ -258,7 +248,7 @@ class TranscriptPdfGenerator
     {
         $student = $transcript->student;
         $completed = $transcript->completed_date?->format('Y-m-d') ?? 'N/A';
-        $cgpa = $transcript->cgpa !== null ? rtrim(rtrim(number_format((float) $transcript->cgpa, 2, '.', ''), '0'), '.') : 'N/A';
+        $cgpa = $this->displayCgpa($transcript);
         $programme = $student->program ?? $student->level ?? 'N/A';
 
         $page->addTextFromTop($marginLeft, $top, 'Name: ' . $student->name, 12);
@@ -317,5 +307,27 @@ class TranscriptPdfGenerator
         }
 
         return (string) $value;
+    }
+
+    private function calculateCgpa(Transcript $transcript): ?float
+    {
+        $numericGps = $transcript->moduleResults
+            ->pluck('gp')
+            ->filter(static fn ($value) => is_numeric($value));
+
+        if ($numericGps->isEmpty()) {
+            return $transcript->cgpa !== null ? (float) $transcript->cgpa : null;
+        }
+
+        return $numericGps->sum() / $numericGps->count();
+    }
+
+    private function displayCgpa(Transcript $transcript): string
+    {
+        $cgpa = $this->calculateCgpa($transcript);
+
+        return $cgpa !== null
+            ? rtrim(rtrim(number_format((float) $cgpa, 2, '.', ''), '0'), '.')
+            : 'N/A';
     }
 }

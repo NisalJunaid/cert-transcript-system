@@ -10,7 +10,7 @@ class SimplePdf
     /** @var SimplePdfPage[] */
     private array $pages = [];
 
-    public function __construct(float $width = 612.0, float $height = 792.0)
+    public function __construct(float $width = 792.0, float $height = 612.0)
     {
         $this->width = $width;
         $this->height = $height;

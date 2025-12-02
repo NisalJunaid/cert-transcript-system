@@ -89,6 +89,9 @@ class TranscriptImportController extends Controller
 
             $transcript->moduleResults()->delete();
 
+            $gpSum = 0;
+            $gpCount = 0;
+
             foreach ($moduleIndices as $index) {
                 $name = $this->value($row, ["module_name_{$index}"]);
                 $code = $this->value($row, ["module_code_{$index}"]);
@@ -99,6 +102,11 @@ class TranscriptImportController extends Controller
 
                 if ($name === null && $code === null && $marks === null && $grade === null && $gp === null && $cp === null) {
                     continue;
+                }
+
+                if (is_numeric($gp)) {
+                    $gpSum += (float) $gp;
+                    $gpCount++;
                 }
 
                 ModuleResult::create([
@@ -112,6 +120,11 @@ class TranscriptImportController extends Controller
                     'position' => $index,
                 ]);
             }
+
+            $computedCgpa = $gpCount > 0 ? $gpSum / $gpCount : null;
+            $transcript->update([
+                'cgpa' => $computedCgpa,
+            ]);
 
             $imported++;
         }
