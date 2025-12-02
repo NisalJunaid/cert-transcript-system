@@ -35,12 +35,15 @@ class TranscriptImportController extends Controller
         $headers = $this->normalizeHeaders(str_getcsv($firstLine, $delimiter));
 
         $rows = [];
+        $headerCount = count($headers);
+
         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
             if ($this->rowIsEmpty($row)) {
                 continue;
             }
 
-            $row = array_pad($row, count($headers), null);
+            // Normalize column counts to avoid shifted data when rows are shorter/longer than the header count.
+            $row = array_slice(array_pad($row, $headerCount, null), 0, $headerCount);
             $rows[] = array_combine($headers, $row);
         }
 
@@ -165,11 +168,12 @@ class TranscriptImportController extends Controller
         $indices = [];
 
         foreach ($headers as $header) {
-            if (preg_match('/module_name_(\d+)/', $header, $matches)) {
+            if (preg_match('/(?:module_name|module_code|marks|mark|grade|gp|cp)_(\d+)/', $header, $matches)) {
                 $indices[] = (int) $matches[1];
             }
         }
 
+        $indices = array_values(array_unique($indices));
         sort($indices);
 
         return $indices;
@@ -179,7 +183,7 @@ class TranscriptImportController extends Controller
     {
         foreach ($keys as $key) {
             if (array_key_exists($key, $row) && $row[$key] !== null && $row[$key] !== '') {
-                return $row[$key];
+                return trim((string) $row[$key]);
             }
         }
 
@@ -214,13 +218,17 @@ class TranscriptImportController extends Controller
             return null;
         }
 
-        $timestamp = strtotime((string) $value);
+        try {
+            return Carbon::parse((string) $value)->toDateString();
+        } catch (\Throwable $e) {
+            $timestamp = strtotime((string) $value);
 
-        if ($timestamp === false) {
-            return null;
+            if ($timestamp === false) {
+                return null;
+            }
+
+            return Carbon::createFromTimestamp($timestamp)->toDateString();
         }
-
-        return Carbon::createFromTimestamp($timestamp)->toDateString();
     }
 
     private function rowIsEmpty(array $row): bool
