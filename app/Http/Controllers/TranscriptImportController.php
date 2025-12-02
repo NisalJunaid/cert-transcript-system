@@ -236,9 +236,26 @@ class TranscriptImportController extends Controller
             return null;
         }
 
-        $clean = Str::of((string) $value)->replace(',', '.')->trim();
+        $clean = Str::of((string) $value)->trim();
 
-        return is_numeric($clean) ? (float) $clean : null;
+        if ($clean === '') {
+            return null;
+        }
+
+        // Direct numeric strings (with comma or dot separators)
+        $normalized = $clean->replace(',', '.');
+        if (is_numeric($normalized)) {
+            return (float) $normalized;
+        }
+
+        // Fallback: extract the first numeric sequence (handles values like "12 CP" or "GP 3.0")
+        if (preg_match('/-?\d+(?:[.,]\d+)?/', $clean, $match)) {
+            $extracted = str_replace(',', '.', $match[0]);
+
+            return is_numeric($extracted) ? (float) $extracted : null;
+        }
+
+        return null;
     }
 
     private function toNullableInteger($value): ?int
