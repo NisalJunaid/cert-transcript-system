@@ -92,8 +92,8 @@ class TranscriptImportController extends Controller
 
             $transcript->moduleResults()->delete();
 
-            $gpSum = 0;
-            $gpCount = 0;
+            $weightedPoints = 0;
+            $countedCredits = 0;
 
             foreach ($moduleIndices as $index) {
                 $name = $this->value($row, ["module_name_{$index}"]);
@@ -102,14 +102,15 @@ class TranscriptImportController extends Controller
                 $grade = $this->value($row, ["grade_{$index}"]);
                 $gp = $this->toNullableNumber($this->value($row, ["gp{$index}", "gp_{$index}"]));
                 $cp = $this->toNullableNumber($this->value($row, ["cp{$index}", "cp_{$index}"]));
+                $resolvedGp = is_numeric($gp) ? (float) $gp : $this->gradePointFromGrade($grade);
 
                 if ($name === null && $code === null && $marks === null && $grade === null && $gp === null && $cp === null) {
                     continue;
                 }
 
-                if (is_numeric($gp)) {
-                    $gpSum += (float) $gp;
-                    $gpCount++;
+                if ($resolvedGp !== null && $cp !== null && $cp > 0) {
+                    $weightedPoints += $resolvedGp * $cp;
+                    $countedCredits += $cp;
                 }
 
                 ModuleResult::create([
@@ -118,13 +119,14 @@ class TranscriptImportController extends Controller
                     'code' => $code,
                     'marks' => $marks,
                     'grade' => $grade,
-                    'gp' => $gp,
+                    'gp' => $resolvedGp,
                     'cp' => $cp,
                     'position' => $index,
                 ]);
             }
 
-            $computedCgpa = $gpCount > 0 ? $gpSum / $gpCount : null;
+            $cgpaFromSheet = $this->toNullableNumber($this->value($row, ['cgpa']));
+            $computedCgpa = $countedCredits > 0 ? $weightedPoints / $countedCredits : $cgpaFromSheet;
             $transcript->update([
                 'cgpa' => $computedCgpa,
             ]);
@@ -188,6 +190,33 @@ class TranscriptImportController extends Controller
         }
 
         return null;
+    }
+
+    private function gradePointFromGrade(?string $grade): ?float
+    {
+        if ($grade === null) {
+            return null;
+        }
+
+        $normalized = strtoupper(trim($grade));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        // Exclude grades that should not influence GPA calculations.
+        if (in_array($normalized, ['I', 'DF', 'S', 'U'], true)) {
+            return null;
+        }
+
+        return match ($normalized) {
+            'HD' => 4.0,
+            'DN' => 3.0,
+            'CR' => 2.0,
+            'PP', 'P' => 1.0,
+            'FF', 'WF', 'F' => 0.0,
+            default => null,
+        };
     }
 
     private function toBoolean($value): bool

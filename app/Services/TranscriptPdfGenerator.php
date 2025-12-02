@@ -49,14 +49,51 @@ class TranscriptPdfGenerator
 
     private function calculateCgpa(Transcript $transcript): ?float
     {
-        $numericGps = $transcript->moduleResults
-            ->pluck('gp')
-            ->filter(static fn ($value) => is_numeric($value));
+        $weightedPoints = 0;
+        $countedCredits = 0;
 
-        if ($numericGps->isEmpty()) {
+        foreach ($transcript->moduleResults as $module) {
+            $gp = is_numeric($module->gp) ? (float) $module->gp : $this->gradePointFromGrade($module->grade);
+            $cp = is_numeric($module->cp) ? (float) $module->cp : null;
+
+            if ($gp === null || $cp === null || $cp <= 0) {
+                continue;
+            }
+
+            $weightedPoints += $gp * $cp;
+            $countedCredits += $cp;
+        }
+
+        if ($countedCredits === 0) {
             return $transcript->cgpa !== null ? (float) $transcript->cgpa : null;
         }
 
-        return $numericGps->sum() / $numericGps->count();
+        return $weightedPoints / $countedCredits;
+    }
+
+    private function gradePointFromGrade(?string $grade): ?float
+    {
+        if ($grade === null) {
+            return null;
+        }
+
+        $normalized = strtoupper(trim($grade));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (in_array($normalized, ['I', 'DF', 'S', 'U'], true)) {
+            return null;
+        }
+
+        return match ($normalized) {
+            'HD' => 4.0,
+            'DN' => 3.0,
+            'CR' => 2.0,
+            'PP', 'P' => 1.0,
+            'FF', 'WF', 'F' => 0.0,
+            default => null,
+        };
     }
 }
