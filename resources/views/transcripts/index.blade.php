@@ -55,6 +55,8 @@
                         <select name="template" class="form-select">
                             <option value="default">Default</option>
                             <option value="compact">Compact</option>
+                            <option value="bachelors-single">Bachelors - Single</option>
+                            <option value="certificate">Certificate Template</option>
                         </select>
                     </div>
                     <div class="col-md-6">

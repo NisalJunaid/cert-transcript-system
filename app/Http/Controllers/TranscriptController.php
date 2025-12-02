@@ -71,7 +71,7 @@ class TranscriptController extends Controller
         $validated = $request->validate([
             'transcript_ids' => ['required', 'array', 'min:1'],
             'transcript_ids.*' => ['integer', 'exists:transcripts,id'],
-            'template' => ['required', 'in:default,compact'],
+            'template' => ['required', 'in:default,compact,bachelors-single,certificate'],
         ]);
 
         $transcripts = Transcript::with(['student', 'course', 'moduleResults' => function ($modules) {
