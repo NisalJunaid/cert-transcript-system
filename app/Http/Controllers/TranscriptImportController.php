@@ -100,9 +100,9 @@ class TranscriptImportController extends Controller
                 $code = $this->value($row, ["module_code_{$index}"]);
                 $marks = $this->value($row, ["marks_{$index}", "mark_{$index}"]);
                 $grade = $this->value($row, ["grade_{$index}"]);
-                $gp = $this->toNullableNumber($this->value($row, ["gp{$index}", "gp_{$index}"]));
+                $gp = $this->toNullableInteger($this->value($row, ["gp{$index}", "gp_{$index}"]));
                 $cp = $this->toNullableNumber($this->value($row, ["cp{$index}", "cp_{$index}"]));
-                $resolvedGp = is_numeric($gp) ? (float) $gp : $this->gradePointFromGrade($grade);
+                $resolvedGp = is_numeric($gp) ? (int) $gp : $this->gradePointFromGrade($grade);
 
                 if ($name === null && $code === null && $marks === null && $grade === null && $gp === null && $cp === null) {
                     continue;
@@ -170,7 +170,7 @@ class TranscriptImportController extends Controller
         $indices = [];
 
         foreach ($headers as $header) {
-            if (preg_match('/(?:module_name|module_code|marks|mark|grade|gp|cp)_(\d+)/', $header, $matches)) {
+            if (preg_match('/(?:module_name|module_code|marks|mark|grade|gp|cp)_?(\d+)/', $header, $matches)) {
                 $indices[] = (int) $matches[1];
             }
         }
@@ -192,7 +192,7 @@ class TranscriptImportController extends Controller
         return null;
     }
 
-    private function gradePointFromGrade(?string $grade): ?float
+    private function gradePointFromGrade(?string $grade): ?int
     {
         if ($grade === null) {
             return null;
@@ -210,11 +210,11 @@ class TranscriptImportController extends Controller
         }
 
         return match ($normalized) {
-            'HD' => 4.0,
-            'DN' => 3.0,
-            'CR' => 2.0,
-            'PP', 'P' => 1.0,
-            'FF', 'WF', 'F' => 0.0,
+            'HD' => 4,
+            'DN' => 3,
+            'CR' => 2,
+            'PP', 'P' => 1,
+            'FF', 'WF', 'F' => 0,
             default => null,
         };
     }
@@ -239,6 +239,13 @@ class TranscriptImportController extends Controller
         $clean = Str::of((string) $value)->replace(',', '.')->trim();
 
         return is_numeric($clean) ? (float) $clean : null;
+    }
+
+    private function toNullableInteger($value): ?int
+    {
+        $number = $this->toNullableNumber($value);
+
+        return $number === null ? null : (int) $number;
     }
 
     private function toDate($value): ?string

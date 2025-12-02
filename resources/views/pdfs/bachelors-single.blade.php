@@ -70,7 +70,9 @@
                         <td>{{ $module->name }}</td>
                         <td style="width:20px;">{{ $module->grade }}</td>
                         <td style="width:20px;">
-                            @if($module->gp !== '0' && $module->gp !== 'Exempt')
+                            @if(is_numeric($module->gp) && (int) $module->gp !== 0)
+                                {{ (int) $module->gp }}
+                            @elseif(!is_numeric($module->gp) && !empty($module->gp))
                                 {{ $module->gp }}
                             @endif
                         </td>
@@ -95,7 +97,9 @@
                         <td>{{ $module->name }}</td>
                         <td style="width:20px;">{{ $module->grade }}</td>
                         <td style="width:20px;">
-                            @if($module->gp !== '0' && $module->gp !== 'Exempt')
+                            @if(is_numeric($module->gp) && (int) $module->gp !== 0)
+                                {{ (int) $module->gp }}
+                            @elseif(!is_numeric($module->gp) && !empty($module->gp))
                                 {{ $module->gp }}
                             @endif
                         </td>

@@ -61,8 +61,8 @@
                     <td style="padding-left:20px; width: 100px;">{{ $module->code }}</td>
                     <td>{{ $module->name }}</td>
                     <td>{{ $module->grade }}</td>
-                    <td>{{ $module->gp }}</td>
-                    <td>{{ $module->cp }}</td>
+                    <td>{{ $module->gp !== null ? (int) $module->gp : '' }}</td>
+                    <td>{{ $module->cp !== null ? rtrim(rtrim(number_format($module->cp, 2, '.', ''), '0'), '.') : '' }}</td>
                 </tr>
                 @endforeach
             </table>

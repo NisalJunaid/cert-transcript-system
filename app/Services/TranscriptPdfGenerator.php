@@ -53,7 +53,7 @@ class TranscriptPdfGenerator
         $countedCredits = 0;
 
         foreach ($transcript->moduleResults as $module) {
-            $gp = is_numeric($module->gp) ? (float) $module->gp : $this->gradePointFromGrade($module->grade);
+            $gp = is_numeric($module->gp) ? (int) $module->gp : $this->gradePointFromGrade($module->grade);
             $cp = is_numeric($module->cp) ? (float) $module->cp : null;
 
             if ($gp === null || $cp === null || $cp <= 0) {
@@ -71,7 +71,7 @@ class TranscriptPdfGenerator
         return $weightedPoints / $countedCredits;
     }
 
-    private function gradePointFromGrade(?string $grade): ?float
+    private function gradePointFromGrade(?string $grade): ?int
     {
         if ($grade === null) {
             return null;
@@ -88,11 +88,11 @@ class TranscriptPdfGenerator
         }
 
         return match ($normalized) {
-            'HD' => 4.0,
-            'DN' => 3.0,
-            'CR' => 2.0,
-            'PP', 'P' => 1.0,
-            'FF', 'WF', 'F' => 0.0,
+            'HD' => 4,
+            'DN' => 3,
+            'CR' => 2,
+            'PP', 'P' => 1,
+            'FF', 'WF', 'F' => 0,
             default => null,
         };
     }

@@ -20,6 +20,11 @@ class ModuleResult extends Model
         'position',
     ];
 
+    protected $casts = [
+        'gp' => 'integer',
+        'cp' => 'float',
+    ];
+
     public function transcript()
     {
         return $this->belongsTo(Transcript::class);
