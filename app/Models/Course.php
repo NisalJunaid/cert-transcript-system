@@ -12,6 +12,7 @@ class Course extends Model
     protected $fillable = [
         'shortcode',
         'name',
+        'level',
     ];
 
     public function transcripts()

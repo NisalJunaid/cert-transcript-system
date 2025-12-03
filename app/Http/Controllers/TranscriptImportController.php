@@ -52,9 +52,12 @@ class TranscriptImportController extends Controller
         $moduleIndices = $this->collectModuleIndices($headers);
         $imported = 0;
 
+        $courseLevelFromData = null;
+
         foreach ($rows as $row) {
             $certificateSerial = $this->value($row, ['certificate_serial_number', 'certifciate_serial_number']);
             $studentIdentifier = $this->value($row, ['student_id', 'student_identifier']);
+            $rowLevel = $this->value($row, ['level']);
             $studentData = [
                 'certificate_serial_number' => $certificateSerial,
                 'student_identifier' => $studentIdentifier,
@@ -62,8 +65,12 @@ class TranscriptImportController extends Controller
                 'national_id' => $this->value($row, ['student_national_id', 'national_id']),
                 'batch_no' => $this->value($row, ['batch_no', 'batch']),
                 'program' => $this->value($row, ['program']),
-                'level' => $this->value($row, ['level']),
+                'level' => $rowLevel,
             ];
+
+            if ($courseLevelFromData === null && $rowLevel !== null && $rowLevel !== '') {
+                $courseLevelFromData = $rowLevel;
+            }
 
             if ($certificateSerial === null && $studentIdentifier === null) {
                 $student = Student::create($studentData);
@@ -133,6 +140,10 @@ class TranscriptImportController extends Controller
             ]);
 
             $imported++;
+        }
+
+        if ($courseLevelFromData !== null) {
+            $course->update(['level' => $courseLevelFromData]);
         }
 
         $message = $imported === 1 ? '1 transcript imported' : "{$imported} transcripts imported";

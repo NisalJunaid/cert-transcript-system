@@ -8,22 +8,30 @@ use Illuminate\Support\Collection;
 
 class TranscriptPdfGenerator
 {
-    public function generate(Collection $transcripts, string $template = 'default'): string
+    public function generate(Collection $transcripts, string $requestedTemplate = 'default'): string
     {
-        $view = match ($template) {
-            'compact' => 'pdfs.compact',
-            'bachelors-single' => 'pdfs.bachelors-single',
-            'certificate-transcript' => 'pdfs.certificate-transcript',
-            'certificate-award' => 'pdfs.certificate',
-            default => 'pdfs.default',
-        };
+        $pages = [];
 
-        $metrics = $this->buildMetrics($transcripts);
+        foreach ($transcripts as $transcript) {
+            $template = $this->resolveTemplateForTranscript($transcript, $requestedTemplate);
+            $view = match ($template) {
+                'compact' => 'pdfs.compact',
+                'bachelors-single' => 'pdfs.bachelors-single',
+                'certificate-transcript' => 'pdfs.certificate-transcript',
+                'certificate-award' => 'pdfs.certificate',
+                'associate-degree' => 'pdfs.associate-degree',
+                default => 'pdfs.default',
+            };
 
-        $html = view($view, [
-            'transcripts' => $transcripts,
-            'metrics' => $metrics,
-        ])->render();
+            $metrics = $this->buildMetrics(collect([$transcript]));
+
+            $pages[] = view($view, [
+                'transcripts' => collect([$transcript]),
+                'metrics' => $metrics,
+            ])->render();
+        }
+
+        $html = implode('<div style="page-break-after: always"></div>', $pages);
 
         return Pdf::loadHTML($html)
             ->setPaper('a4', 'landscape')
@@ -70,6 +78,30 @@ class TranscriptPdfGenerator
         }
 
         return round($weightedPoints / $countedCredits, 2);
+    }
+
+    private function resolveTemplateForTranscript(Transcript $transcript, string $requestedTemplate): string
+    {
+        // Certificate documents explicitly request the award template.
+        if ($requestedTemplate === 'certificate-award') {
+            return 'certificate-award';
+        }
+
+        $level = $transcript->course->level ?? $transcript->student->level;
+
+        if (in_array((string) $level, ['1', '2', '3', '4', '5', '8', '9'], true)) {
+            return 'certificate-transcript';
+        }
+
+        if ((string) $level === '6') {
+            return 'associate-degree';
+        }
+
+        if ((string) $level === '7') {
+            return 'bachelors-single';
+        }
+
+        return $requestedTemplate;
     }
 
     private function gradePointFromGrade(?string $grade): ?int

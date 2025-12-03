@@ -49,30 +49,21 @@
         @else
             <form method="POST" action="{{ route('transcripts.pdf') }}" id="transcript-form">
                 @csrf
-                <div class="row mb-3 align-items-end g-2">
+                <input type="hidden" name="template" id="template-input" value="auto">
+                <div class="row mb-3 align-items-end g-3">
                     <div class="col-md-4 col-lg-3">
-                        <label class="form-label">Bulk document type</label>
-                        <div class="d-flex gap-2 align-items-center">
-                            <select name="document_type" id="document-type" class="form-select">
-                                <option value="transcript" selected>Transcript</option>
-                                <option value="certificate">Certificate</option>
-                            </select>
-                            <button type="submit" class="btn btn-success flex-shrink-0" id="bulk-submit">Download Selected</button>
-                        </div>
-                        <div class="form-text">Choose whether selected rows download as transcripts or certificates.</div>
-                    </div>
-                    <div class="col-md-3 col-lg-3">
-                        <label class="form-label">Transcript template</label>
-                        <select name="template" class="form-select" id="template-select">
-                            <option value="default">Default</option>
-                            <option value="compact">Compact</option>
-                            <option value="bachelors-single">Bachelors - Single</option>
-                            <option value="certificate-transcript">Certificate Course Transcript</option>
-                            <option value="certificate-award" class="d-none">Certificate Award</option>
+                        <label class="form-label mb-1">Bulk document type</label>
+                        <select name="document_type" id="document-type" class="form-select">
+                            <option value="transcript" selected>Transcript</option>
+                            <option value="certificate">Certificate</option>
                         </select>
+                        <div class="form-text">Transcript templates are chosen automatically by course level.</div>
                     </div>
-                    <div class="col-md-5 col-lg-6">
-                        <p class="mb-1 text-muted">Select one or more rows, choose the document type and template (for transcripts), then click Download.</p>
+                    <div class="col-md-4 col-lg-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100" id="bulk-submit">Download Selected</button>
+                    </div>
+                    <div class="col-md-4 col-lg-6 d-flex align-items-end">
+                        <p class="mb-0 text-muted">Select rows, choose the document type, then download transcripts or certificates.</p>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -102,29 +93,31 @@
                                     <td>{{ $transcript->cgpa ?? 'n/a' }}</td>
                                     <td>{{ $transcript->completed_date?->format('Y-m-d') ?? 'n/a' }}</td>
                                     <td>{{ $transcript->moduleResults->count() }}</td>
-                                    <td class="d-flex gap-2">
-                                        <button
-                                            type="submit"
-                                            name="transcript_ids[]"
-                                            value="{{ $transcript->id }}"
-                                            class="btn btn-sm btn-outline-primary document-trigger"
-                                            formaction="{{ route('transcripts.pdf') }}"
-                                            formmethod="POST"
-                                            data-document-type="transcript"
-                                        >
-                                            Download Transcript
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            name="transcript_ids[]"
-                                            value="{{ $transcript->id }}"
-                                            class="btn btn-sm btn-outline-secondary document-trigger"
-                                            formaction="{{ route('transcripts.pdf') }}"
-                                            formmethod="POST"
-                                            data-document-type="certificate"
-                                        >
-                                            Download Certificate
-                                        </button>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button
+                                                type="submit"
+                                                name="transcript_ids[]"
+                                                value="{{ $transcript->id }}"
+                                                class="btn btn-sm btn-outline-primary document-trigger"
+                                                formaction="{{ route('transcripts.pdf') }}"
+                                                formmethod="POST"
+                                                data-document-type="transcript"
+                                            >
+                                                Download Transcript
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                name="transcript_ids[]"
+                                                value="{{ $transcript->id }}"
+                                                class="btn btn-sm btn-outline-secondary document-trigger"
+                                                formaction="{{ route('transcripts.pdf') }}"
+                                                formmethod="POST"
+                                                data-document-type="certificate"
+                                            >
+                                                Download Certificate
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -144,40 +137,24 @@
 <script>
     (function() {
         const form = document.getElementById('transcript-form');
-        const templateSelect = document.getElementById('template-select');
         const documentTypeSelect = document.getElementById('document-type');
-        const hiddenCertificateValue = 'certificate-award';
-
-        const ensureTemplateMatchesType = (docType) => {
-            if (docType === 'certificate') {
-                templateSelect.value = hiddenCertificateValue;
-                [...templateSelect.options].forEach((opt) => {
-                    opt.classList.toggle('d-none', opt.value !== hiddenCertificateValue);
-                });
-            } else {
-                if (templateSelect.value === hiddenCertificateValue) {
-                    templateSelect.value = 'default';
-                }
-                [...templateSelect.options].forEach((opt) => {
-                    opt.classList.toggle('d-none', opt.value === hiddenCertificateValue);
-                });
-            }
-        };
+        const templateInput = document.getElementById('template-input');
 
         documentTypeSelect.addEventListener('change', (event) => {
-            ensureTemplateMatchesType(event.target.value);
+            const type = event.target.value;
+            templateInput.value = type === 'certificate' ? 'certificate-award' : 'auto';
         });
 
         document.querySelectorAll('.document-trigger').forEach((button) => {
             button.addEventListener('click', () => {
                 const targetType = button.dataset.documentType || 'transcript';
                 documentTypeSelect.value = targetType;
-                ensureTemplateMatchesType(targetType);
+                templateInput.value = targetType === 'certificate' ? 'certificate-award' : 'auto';
             });
         });
 
         form.addEventListener('submit', () => {
-            ensureTemplateMatchesType(documentTypeSelect.value);
+            templateInput.value = documentTypeSelect.value === 'certificate' ? 'certificate-award' : 'auto';
         });
     })();
 </script>

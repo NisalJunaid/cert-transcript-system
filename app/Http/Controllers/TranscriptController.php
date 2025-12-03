@@ -72,7 +72,7 @@ class TranscriptController extends Controller
             'transcript_ids' => ['required', 'array', 'min:1'],
             'transcript_ids.*' => ['integer', 'exists:transcripts,id'],
             'document_type' => ['required', 'in:transcript,certificate'],
-            'template' => ['nullable', 'string', 'in:default,compact,bachelors-single,certificate-transcript,certificate-award'],
+            'template' => ['nullable', 'string', 'in:auto,default,compact,bachelors-single,certificate-transcript,certificate-award,associate-degree'],
         ]);
 
         $transcripts = Transcript::with(['student', 'course', 'moduleResults' => function ($modules) {
@@ -83,7 +83,7 @@ class TranscriptController extends Controller
 
         $template = $validated['document_type'] === 'certificate'
             ? 'certificate-award'
-            : ($validated['template'] ?? 'default');
+            : ($validated['template'] ?? 'auto');
 
         $pdfContent = $generator->generate($transcripts, $template);
 
