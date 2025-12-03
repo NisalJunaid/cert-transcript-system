@@ -49,28 +49,30 @@
         @else
             <form method="POST" action="{{ route('transcripts.pdf') }}" id="transcript-form">
                 @csrf
-                <div class="row mb-3 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Document type</label>
-                        <select name="document_type" id="document-type" class="form-select">
-                            <option value="transcript" selected>Transcript</option>
-                            <option value="certificate">Certificate</option>
-                        </select>
+                <div class="row mb-3 align-items-end g-2">
+                    <div class="col-md-4 col-lg-3">
+                        <label class="form-label">Bulk document type</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <select name="document_type" id="document-type" class="form-select">
+                                <option value="transcript" selected>Transcript</option>
+                                <option value="certificate">Certificate</option>
+                            </select>
+                            <button type="submit" class="btn btn-success flex-shrink-0" id="bulk-submit">Download Selected</button>
+                        </div>
+                        <div class="form-text">Choose whether selected rows download as transcripts or certificates.</div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Template</label>
+                    <div class="col-md-3 col-lg-3">
+                        <label class="form-label">Transcript template</label>
                         <select name="template" class="form-select" id="template-select">
                             <option value="default">Default</option>
                             <option value="compact">Compact</option>
                             <option value="bachelors-single">Bachelors - Single</option>
-                            <option value="certificate-award" class="d-none">Certificate Template</option>
+                            <option value="certificate-transcript">Certificate Course Transcript</option>
+                            <option value="certificate-award" class="d-none">Certificate Award</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <p class="mb-1 text-muted">Select one or more rows, choose what to generate and click Download.</p>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <button type="submit" class="btn btn-success" id="bulk-submit">Download Selected</button>
+                    <div class="col-md-5 col-lg-6">
+                        <p class="mb-1 text-muted">Select one or more rows, choose the document type and template (for transcripts), then click Download.</p>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -149,8 +151,16 @@
         const ensureTemplateMatchesType = (docType) => {
             if (docType === 'certificate') {
                 templateSelect.value = hiddenCertificateValue;
-            } else if (templateSelect.value === hiddenCertificateValue) {
-                templateSelect.value = 'default';
+                [...templateSelect.options].forEach((opt) => {
+                    opt.classList.toggle('d-none', opt.value !== hiddenCertificateValue);
+                });
+            } else {
+                if (templateSelect.value === hiddenCertificateValue) {
+                    templateSelect.value = 'default';
+                }
+                [...templateSelect.options].forEach((opt) => {
+                    opt.classList.toggle('d-none', opt.value === hiddenCertificateValue);
+                });
             }
         };
 

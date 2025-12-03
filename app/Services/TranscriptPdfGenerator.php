@@ -13,7 +13,8 @@ class TranscriptPdfGenerator
         $view = match ($template) {
             'compact' => 'pdfs.compact',
             'bachelors-single' => 'pdfs.bachelors-single',
-            'certificate', 'certificate-award' => 'pdfs.certificate',
+            'certificate-transcript' => 'pdfs.certificate-transcript',
+            'certificate-award' => 'pdfs.certificate',
             default => 'pdfs.default',
         };
 
