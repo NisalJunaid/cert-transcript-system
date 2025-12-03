@@ -1,0 +1,116 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Course;
+use App\Models\Transcript;
+use App\Services\TranscriptPdfGenerator;
+use Illuminate\Http\Request;
+
+class TranscriptController extends Controller
+{
+    public function index(Request $request)
+    {
+        $courses = Course::orderBy('name')->get();
+        $query = Transcript::with(['student', 'course', 'moduleResults' => function ($modules) {
+            $modules->orderBy('position')->orderBy('id');
+        }]);
+
+        $search = $request->string('search')->trim();
+        $courseId = $request->integer('course_id');
+        $batch = $request->string('batch')->trim();
+        $program = $request->string('program')->trim();
+        $level = $request->string('level')->trim();
+        $perPageInput = $request->input('per_page', '10');
+
+        $allowedPerPage = ['10', '25', '50', '100', 'all'];
+        $perPage = in_array((string) $perPageInput, $allowedPerPage, true) ? (string) $perPageInput : '10';
+
+        if ($search->isNotEmpty()) {
+            $query->whereHas('student', function ($studentQuery) use ($search) {
+                $studentQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('certificate_serial_number', 'like', "%{$search}%")
+                    ->orWhere('student_identifier', 'like', "%{$search}%")
+                    ->orWhere('national_id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($courseId) {
+            $query->where('course_id', $courseId);
+        }
+
+        if ($batch->isNotEmpty()) {
+            $query->whereHas('student', fn ($q) => $q->where('batch_no', 'like', "%{$batch}%"));
+        }
+
+        if ($program->isNotEmpty()) {
+            $query->whereHas('student', fn ($q) => $q->where('program', 'like', "%{$program}%"));
+        }
+
+        if ($level->isNotEmpty()) {
+            $query->whereHas('student', fn ($q) => $q->where('level', 'like', "%{$level}%"));
+        }
+
+        $ordered = $query
+            ->orderByDesc('completed_date')
+            ->orderBy('student_id');
+
+        if ($perPage === 'all') {
+            $perPageValue = max(1, $ordered->count());
+            $transcripts = $ordered
+                ->paginate($perPageValue)
+                ->withQueryString();
+        } else {
+            $transcripts = $ordered
+                ->paginate((int) $perPage)
+                ->withQueryString();
+        }
+
+        return view('transcripts.index', [
+            'transcripts' => $transcripts,
+            'courses' => $courses,
+            'filters' => [
+                'search' => $search,
+                'course_id' => $courseId,
+                'batch' => $batch,
+                'program' => $program,
+                'level' => $level,
+                'per_page' => $perPage,
+            ],
+        ]);
+    }
+
+    public function pdf(Request $request, TranscriptPdfGenerator $generator)
+    {
+        $validated = $request->validate([
+            'transcript_ids' => ['required', 'array', 'min:1'],
+            'transcript_ids.*' => ['integer', 'exists:transcripts,id'],
+            'document_type' => ['required', 'in:transcript,certificate'],
+            'template' => ['nullable', 'string', 'in:auto,default,compact,bachelors-single,certificate-transcript,certificate-award,associate-degree'],
+        ]);
+
+        $transcripts = Transcript::with(['student', 'course', 'moduleResults' => function ($modules) {
+            $modules->orderBy('position')->orderBy('id');
+        }])
+            ->whereIn('id', $validated['transcript_ids'])
+            ->get();
+
+        $template = $validated['document_type'] === 'certificate'
+            ? 'certificate-award'
+            : ($validated['template'] ?? 'auto');
+
+        $pdfContent = $generator->generate($transcripts, $template);
+
+        $filename = ($validated['document_type'] === 'certificate' ? 'certificates-' : 'transcripts-') . $template . '.pdf';
+
+        return response()->streamDownload(
+            static function () use ($pdfContent) {
+                echo $pdfContent;
+            },
+            $filename,
+            [
+                'Content-Type' => 'application/pdf',
+            ]
+        );
+    }
+}
