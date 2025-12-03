@@ -11,6 +11,14 @@
             vertical-align: middle;
             white-space: nowrap;
         }
+        thead th {
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+        }
+        .pagination .page-link {
+            padding: 0.35rem 0.65rem;
+            line-height: 1.2;
+        }
     </style>
 </head>
 <body class="bg-light">

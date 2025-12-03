@@ -8,6 +8,10 @@
     <style>
         .a4-container {
             margin-left:50px;
+            page-break-after: always;
+        }
+        .a4-container:last-of-type {
+            page-break-after: auto;
         }
         .header {
             padding-top: 12%;
@@ -44,7 +48,7 @@
             $cgpa = $metrics[$transcript->id]['cgpa'] ?? $transcript->cgpa;
             $totalcredit = $metrics[$transcript->id]['total_credit'] ?? null;
         @endphp
-        <div class="a4-container" style="page-break-after: always;">
+        <div class="a4-container">
             <div class="header">
                 <table class="first_table">
                     <tr>

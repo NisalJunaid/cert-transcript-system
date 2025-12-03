@@ -52,7 +52,10 @@
 </div>
 
 <div class="card">
-    <div class="card-header py-3 px-3">Transcripts</div>
+    <div class="card-header py-3 px-3 d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Transcripts</span>
+        <span class="text-muted small">Select rows, choose document type, then download.</span>
+    </div>
     <div class="card-body pt-3">
         @if($transcripts->isEmpty())
             <p class="text-muted mb-0">No transcripts found. Import a CSV to get started.</p>
@@ -61,19 +64,16 @@
                 @csrf
                 <input type="hidden" name="template" id="template-input" value="auto">
                 <div class="row mb-3 align-items-end g-3">
-                    <div class="col-lg-4 col-md-6">
+                    <div class="col-lg-5 col-md-6">
                         <label class="form-label small text-uppercase text-muted mb-1">Bulk document type</label>
-                        <select name="document_type" id="document-type" class="form-select">
-                            <option value="transcript" selected>Transcript</option>
-                            <option value="certificate">Certificate</option>
-                        </select>
+                        <div class="d-flex gap-2">
+                            <select name="document_type" id="document-type" class="form-select">
+                                <option value="transcript" selected>Transcript</option>
+                                <option value="certificate">Certificate</option>
+                            </select>
+                            <button type="submit" class="btn btn-success" id="bulk-submit">Download Selected</button>
+                        </div>
                         <div class="form-text">Transcript templates are chosen automatically by course level.</div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 d-flex align-items-end gap-2">
-                        <button type="submit" class="btn btn-success flex-grow-1" id="bulk-submit">Download Selected</button>
-                    </div>
-                    <div class="col-lg-4 d-none d-lg-flex align-items-end justify-content-end">
-                        <p class="mb-0 text-muted">Select rows, choose the document type, then download.</p>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -106,26 +106,20 @@
                                     <td class="text-center align-middle">
                                         <div class="btn-group" role="group">
                                             <button
-                                                type="submit"
-                                                name="transcript_ids[]"
-                                                value="{{ $transcript->id }}"
+                                                type="button"
                                                 class="btn btn-sm btn-outline-primary document-trigger"
-                                                formaction="{{ route('transcripts.pdf') }}"
-                                                formmethod="POST"
                                                 data-document-type="transcript"
                                                 data-template="auto"
+                                                data-transcript-id="{{ $transcript->id }}"
                                             >
                                                 Download Transcript
                                             </button>
                                             <button
-                                                type="submit"
-                                                name="transcript_ids[]"
-                                                value="{{ $transcript->id }}"
+                                                type="button"
                                                 class="btn btn-sm btn-outline-secondary document-trigger"
-                                                formaction="{{ route('transcripts.pdf') }}"
-                                                formmethod="POST"
                                                 data-document-type="certificate"
                                                 data-template="certificate-award"
+                                                data-transcript-id="{{ $transcript->id }}"
                                             >
                                                 Download Certificate
                                             </button>
@@ -138,7 +132,7 @@
                 </div>
             </form>
             <div class="mt-3">
-                {{ $transcripts->links() }}
+                {{ $transcripts->links('pagination::bootstrap-5') }}
             </div>
         @endif
     </div>
@@ -158,11 +152,20 @@
         });
 
         document.querySelectorAll('.document-trigger').forEach((button) => {
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
                 const targetType = button.dataset.documentType || 'transcript';
                 const template = button.dataset.template || (targetType === 'certificate' ? 'certificate-award' : 'auto');
+                const targetId = button.dataset.transcriptId;
+
                 documentTypeSelect.value = targetType;
                 templateInput.value = template;
+
+                document.querySelectorAll('.transcript-checkbox').forEach((checkbox) => {
+                    checkbox.checked = checkbox.value === targetId;
+                });
+
+                form.requestSubmit();
             });
         });
 

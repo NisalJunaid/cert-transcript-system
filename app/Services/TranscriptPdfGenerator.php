@@ -31,7 +31,7 @@ class TranscriptPdfGenerator
             ])->render();
         }
 
-        $html = implode('<div style="page-break-after: always"></div>', $pages);
+        $html = implode('', $pages);
 
         $orientation = $requestedTemplate === 'certificate-award' ? 'portrait' : 'landscape';
 
