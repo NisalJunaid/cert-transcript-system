@@ -47,23 +47,30 @@
         @if($transcripts->isEmpty())
             <p class="text-muted mb-0">No transcripts found. Import a CSV to get started.</p>
         @else
-            <form method="POST" action="{{ route('transcripts.pdf') }}">
+            <form method="POST" action="{{ route('transcripts.pdf') }}" id="transcript-form">
                 @csrf
                 <div class="row mb-3 align-items-end">
                     <div class="col-md-3">
+                        <label class="form-label">Document type</label>
+                        <select name="document_type" id="document-type" class="form-select">
+                            <option value="transcript" selected>Transcript</option>
+                            <option value="certificate">Certificate</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">Template</label>
-                        <select name="template" class="form-select">
+                        <select name="template" class="form-select" id="template-select">
                             <option value="default">Default</option>
                             <option value="compact">Compact</option>
                             <option value="bachelors-single">Bachelors - Single</option>
-                            <option value="certificate">Certificate Template</option>
+                            <option value="certificate-award" class="d-none">Certificate Template</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <p class="mb-1 text-muted">Select one or more rows, choose a template and click Generate PDF.</p>
+                    <div class="col-md-4">
+                        <p class="mb-1 text-muted">Select one or more rows, choose what to generate and click Download.</p>
                     </div>
-                    <div class="col-md-3 text-end">
-                        <button type="submit" class="btn btn-success">Generate PDF</button>
+                    <div class="col-md-2 text-end">
+                        <button type="submit" class="btn btn-success" id="bulk-submit">Download Selected</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -93,9 +100,28 @@
                                     <td>{{ $transcript->cgpa ?? 'n/a' }}</td>
                                     <td>{{ $transcript->completed_date?->format('Y-m-d') ?? 'n/a' }}</td>
                                     <td>{{ $transcript->moduleResults->count() }}</td>
-                                    <td>
-                                        <button name="transcript_ids[]" value="{{ $transcript->id }}" class="btn btn-sm btn-outline-primary" formaction="{{ route('transcripts.pdf') }}" formmethod="POST">
-                                            Download PDF
+                                    <td class="d-flex gap-2">
+                                        <button
+                                            type="submit"
+                                            name="transcript_ids[]"
+                                            value="{{ $transcript->id }}"
+                                            class="btn btn-sm btn-outline-primary document-trigger"
+                                            formaction="{{ route('transcripts.pdf') }}"
+                                            formmethod="POST"
+                                            data-document-type="transcript"
+                                        >
+                                            Download Transcript
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            name="transcript_ids[]"
+                                            value="{{ $transcript->id }}"
+                                            class="btn btn-sm btn-outline-secondary document-trigger"
+                                            formaction="{{ route('transcripts.pdf') }}"
+                                            formmethod="POST"
+                                            data-document-type="certificate"
+                                        >
+                                            Download Certificate
                                         </button>
                                     </td>
                                 </tr>
@@ -111,3 +137,38 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function() {
+        const form = document.getElementById('transcript-form');
+        const templateSelect = document.getElementById('template-select');
+        const documentTypeSelect = document.getElementById('document-type');
+        const hiddenCertificateValue = 'certificate-award';
+
+        const ensureTemplateMatchesType = (docType) => {
+            if (docType === 'certificate') {
+                templateSelect.value = hiddenCertificateValue;
+            } else if (templateSelect.value === hiddenCertificateValue) {
+                templateSelect.value = 'default';
+            }
+        };
+
+        documentTypeSelect.addEventListener('change', (event) => {
+            ensureTemplateMatchesType(event.target.value);
+        });
+
+        document.querySelectorAll('.document-trigger').forEach((button) => {
+            button.addEventListener('click', () => {
+                const targetType = button.dataset.documentType || 'transcript';
+                documentTypeSelect.value = targetType;
+                ensureTemplateMatchesType(targetType);
+            });
+        });
+
+        form.addEventListener('submit', () => {
+            ensureTemplateMatchesType(documentTypeSelect.value);
+        });
+    })();
+</script>
+@endpush

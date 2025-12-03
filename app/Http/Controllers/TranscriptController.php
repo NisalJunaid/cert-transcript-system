@@ -71,7 +71,8 @@ class TranscriptController extends Controller
         $validated = $request->validate([
             'transcript_ids' => ['required', 'array', 'min:1'],
             'transcript_ids.*' => ['integer', 'exists:transcripts,id'],
-            'template' => ['required', 'in:default,compact,bachelors-single,certificate'],
+            'document_type' => ['required', 'in:transcript,certificate'],
+            'template' => ['nullable', 'string'],
         ]);
 
         $transcripts = Transcript::with(['student', 'course', 'moduleResults' => function ($modules) {
@@ -80,9 +81,13 @@ class TranscriptController extends Controller
             ->whereIn('id', $validated['transcript_ids'])
             ->get();
 
-        $pdfContent = $generator->generate($transcripts, $validated['template']);
+        $template = $validated['document_type'] === 'certificate'
+            ? 'certificate-award'
+            : (in_array($validated['template'], ['default', 'compact', 'bachelors-single'], true) ? $validated['template'] : 'default');
 
-        $filename = 'transcripts-' . $validated['template'] . '.pdf';
+        $pdfContent = $generator->generate($transcripts, $template);
+
+        $filename = ($validated['document_type'] === 'certificate' ? 'certificates-' : 'transcripts-') . $template . '.pdf';
 
         return response()->streamDownload(
             static function () use ($pdfContent) {
