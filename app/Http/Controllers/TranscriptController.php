@@ -21,6 +21,10 @@ class TranscriptController extends Controller
         $batch = $request->string('batch')->trim();
         $program = $request->string('program')->trim();
         $level = $request->string('level')->trim();
+        $perPageInput = $request->input('per_page', '10');
+
+        $allowedPerPage = ['10', '25', '50', '100', 'all'];
+        $perPage = in_array((string) $perPageInput, $allowedPerPage, true) ? (string) $perPageInput : '10';
 
         if ($search->isNotEmpty()) {
             $query->whereHas('student', function ($studentQuery) use ($search) {
@@ -47,11 +51,20 @@ class TranscriptController extends Controller
             $query->whereHas('student', fn ($q) => $q->where('level', 'like', "%{$level}%"));
         }
 
-        $transcripts = $query
+        $ordered = $query
             ->orderByDesc('completed_date')
-            ->orderBy('student_id')
-            ->paginate(20)
-            ->withQueryString();
+            ->orderBy('student_id');
+
+        if ($perPage === 'all') {
+            $perPageValue = max(1, $ordered->count());
+            $transcripts = $ordered
+                ->paginate($perPageValue)
+                ->withQueryString();
+        } else {
+            $transcripts = $ordered
+                ->paginate((int) $perPage)
+                ->withQueryString();
+        }
 
         return view('transcripts.index', [
             'transcripts' => $transcripts,
@@ -62,6 +75,7 @@ class TranscriptController extends Controller
                 'batch' => $batch,
                 'program' => $program,
                 'level' => $level,
+                'per_page' => $perPage,
             ],
         ]);
     }

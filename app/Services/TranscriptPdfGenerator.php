@@ -33,8 +33,10 @@ class TranscriptPdfGenerator
 
         $html = implode('<div style="page-break-after: always"></div>', $pages);
 
+        $orientation = $requestedTemplate === 'certificate-award' ? 'portrait' : 'landscape';
+
         return Pdf::loadHTML($html)
-            ->setPaper('a4', 'landscape')
+            ->setPaper('a4', $orientation)
             ->output();
     }
 
