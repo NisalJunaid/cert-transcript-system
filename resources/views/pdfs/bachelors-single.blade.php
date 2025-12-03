@@ -45,7 +45,7 @@
                 </tr>
                 <tr>
                     <td style="width: 110px;"><b>Programme</b></td>
-                    <td>{{ $student->program ?? $student->level }}</td>
+                    <td>{{ $transcript->course->name ?? $student->program ?? $student->level }}</td>
                     <td><b>Completed on</b></td>
                     <td>{{ optional($transcript->completed_date)->format('Y-m-d') }}</td>
                     <td><b>CGPA</b></td>

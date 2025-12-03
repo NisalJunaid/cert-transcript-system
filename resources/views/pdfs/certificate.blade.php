@@ -112,7 +112,7 @@
         <div class="name" style="font-family: 'Lucida Calligraphy', serif;">{{ $student->name }}</div>
         <div class="ids">(Passport No: {{ $student->national_id }}, Student ID: {{ $student->student_identifier ?? $student->student_id ?? 'N/A' }})</div>
         <div class="fulfillment">has successfully fulfilled the requirements of</div>
-        <div class="degree">{{ $student->program ?? $student->level }}</div>
+    <div class="degree">{{ $transcript->course->name ?? ($student->program ?? $student->level) }}</div>
         <div class="award">@if($cgpa !== null && $cgpa >= 3) (Pass with Distinction) @endif</div>
         <div class="year">In the year {{ $awardYear }}</div>
         <div class="under-seal">Given under the common seal of the College Council</div>

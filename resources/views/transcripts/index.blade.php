@@ -165,7 +165,7 @@
                     checkbox.checked = checkbox.value === targetId;
                 });
 
-                form.requestSubmit();
+                form.submit();
             });
         });
 
