@@ -101,7 +101,7 @@
                                     <td class="align-middle">{{ $transcript->course->name }} ({{ $transcript->course->shortcode }})</td>
                                     <td class="text-center align-middle">{{ $transcript->student->batch_no ?? 'n/a' }}</td>
                                     <td class="text-center align-middle">{{ $transcript->cgpa ?? 'n/a' }}</td>
-                                    <td class="text-center align-middle">{{ $transcript->completed_date?->format('Y-m-d') ?? 'n/a' }}</td>
+                                    <td class="text-center align-middle">{{ $transcript->completed_date?->format('F Y') ?? 'n/a' }}</td>
                                     <td class="text-center align-middle">{{ $transcript->moduleResults->count() }}</td>
                                     <td class="text-center align-middle">
                                         <div class="btn-group" role="group">

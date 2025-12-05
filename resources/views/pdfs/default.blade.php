@@ -27,7 +27,7 @@
             <div><strong>Student:</strong> {{ $student->name }} | ID: {{ $student->student_identifier ?? 'N/A' }} | Serial: {{ $student->certificate_serial_number ?? 'N/A' }}</div>
             <div><strong>National ID:</strong> {{ $student->national_id ?? 'N/A' }}</div>
             <div><strong>Batch:</strong> {{ $student->batch_no ?? 'N/A' }} | Program: {{ $transcript->course->name ?? ($student->program ?? 'N/A') }} | Level: {{ $transcript->course->level ?? $student->level ?? 'N/A' }}</div>
-            <div><strong>Completed:</strong> {{ optional($transcript->completed_date)->format('Y-m-d') ?? 'Not set' }}</div>
+            <div><strong>Completed:</strong> {{ optional($transcript->completed_date)->format('F Y') ?? 'Not set' }}</div>
             <div><strong>CGPA:</strong> {{ $cgpa !== null ? number_format($cgpa, 2, '.', '') : 'N/A' }}</div>
         </div>
         <div class="modules">

@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Transcript;
 use App\Services\TranscriptPdfGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class TranscriptController extends Controller
 {
@@ -102,6 +103,19 @@ class TranscriptController extends Controller
         $pdfContent = $generator->generate($transcripts, $template);
 
         $filename = ($validated['document_type'] === 'certificate' ? 'certificates-' : 'transcripts-') . $template . '.pdf';
+
+        if ($transcripts->count() === 1) {
+            $single = $transcripts->first();
+            $student = $single?->student;
+            $studentId = $student->student_identifier ?? $student->student_id ?? 'id';
+            $docLabel = $validated['document_type'] === 'certificate' ? 'Certificate' : 'Transcript';
+
+            $filename = trim(implode('-', [
+                Str::slug($student?->name ?? 'student'),
+                Str::slug($studentId),
+                Str::slug($docLabel),
+            ]), '-') . '.pdf';
+        }
 
         return response()->streamDownload(
             static function () use ($pdfContent) {

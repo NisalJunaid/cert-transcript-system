@@ -63,7 +63,7 @@
                         <td style="width: 110px;"><b>Programme</b></td>
                         <td>{{ $transcript->course->name ?? $student->program ?? $student->level }}</td>
                         <td><b>Completed on</b></td>
-                        <td>{{ optional($transcript->completed_date)->format('Y-m-d') ?? 'N/A' }}</td>
+                        <td>{{ optional($transcript->completed_date)->format('F Y') ?? 'N/A' }}</td>
                         <td><b>CGPA</b></td>
                         <td>{{ $cgpa !== null ? number_format($cgpa, 2, '.', '') : 'N/A' }}</td>
                     </tr>
