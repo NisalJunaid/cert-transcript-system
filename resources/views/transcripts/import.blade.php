@@ -36,11 +36,34 @@
         @if($courses->isEmpty())
             <p class="text-muted mb-0">No courses found yet.</p>
         @else
-            <ul class="mb-0">
-                @foreach($courses as $course)
-                    <li>{{ $course->name }} ({{ $course->shortcode }})</li>
-                @endforeach
-            </ul>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-nowrap">Shortcode</th>
+                            <th class="text-nowrap">Name</th>
+                            <th class="text-nowrap">Level</th>
+                            <th class="text-end text-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($courses as $course)
+                            <tr>
+                                <td class="text-nowrap">{{ $course->shortcode }}</td>
+                                <td>{{ $course->name }}</td>
+                                <td class="text-nowrap">{{ $course->level ?? '—' }}</td>
+                                <td class="text-end text-nowrap">
+                                    <form action="{{ route('courses.destroy', $course) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this course and all related transcripts?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
     </div>
 </div>

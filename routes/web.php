@@ -8,6 +8,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [TranscriptController::class, 'index'])->name('transcripts.index');
     Route::get('/import', [TranscriptImportController::class, 'create'])->name('transcripts.import');
     Route::post('/import', [TranscriptImportController::class, 'store'])->name('transcripts.import.store');
+    Route::delete('/courses/{course}', [TranscriptImportController::class, 'destroy'])->name('courses.destroy');
     Route::post('/transcripts/pdf', [TranscriptController::class, 'pdf'])->name('transcripts.pdf');
 });
 

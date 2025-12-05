@@ -8,6 +8,7 @@ use App\Models\ModuleResult;
 use App\Models\Student;
 use App\Models\Transcript;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TranscriptImportController extends Controller
@@ -151,6 +152,28 @@ class TranscriptImportController extends Controller
         return redirect()
             ->route('transcripts.index')
             ->with('status', "$message for {$course->name} ({$course->shortcode}).");
+    }
+
+    public function destroy(Course $course)
+    {
+        DB::transaction(function () use ($course) {
+            $studentIds = $course->transcripts()->pluck('student_id')->unique();
+
+            $course->transcripts()->each->delete();
+            $course->delete();
+
+            foreach ($studentIds as $studentId) {
+                $hasOtherCourses = Transcript::where('student_id', $studentId)->exists();
+
+                if (! $hasOtherCourses) {
+                    Student::whereKey($studentId)->delete();
+                }
+            }
+        });
+
+        return redirect()
+            ->route('transcripts.import')
+            ->with('status', 'Course and related data deleted.');
     }
 
     private function detectDelimiter(string $line): string

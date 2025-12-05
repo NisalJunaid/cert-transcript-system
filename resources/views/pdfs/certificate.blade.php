@@ -110,7 +110,7 @@
     <div class="certificate-container">
         <div class="title">This is to certify that</div>
         <div class="name" style="font-family: 'Lucida Calligraphy', serif;">{{ $student->name }}</div>
-        <div class="ids">(Passport No: {{ $student->national_id }}, Student ID: {{ $student->student_identifier ?? $student->student_id ?? 'N/A' }})</div>
+    <div class="ids">(National ID: {{ $student->national_id }}, Student ID: {{ $student->student_identifier ?? $student->student_id ?? 'N/A' }})</div>
         <div class="fulfillment">has successfully fulfilled the requirements of</div>
     <div class="degree">{{ $transcript->course->name ?? ($student->program ?? $student->level) }}</div>
         <div class="award">@if($cgpa !== null && $cgpa >= 3) (Pass with Distinction) @endif</div>

@@ -38,7 +38,7 @@
                 <tr>
                     <td><b>Name</b></td>
                     <td style="width: 400px;">{{ $student->name }}</td>
-                    <td style="width: 110px;"><b>Passport No</b></td>
+                    <td style="width: 110px;"><b>National ID</b></td>
                     <td>{{ $student->national_id }}</td>
                     <td style="width: 110px;"><b>Student ID</b></td>
                     <td>{{ $student->student_identifier }}</td>
