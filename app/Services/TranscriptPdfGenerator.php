@@ -90,16 +90,23 @@ class TranscriptPdfGenerator
         }
 
         $level = $transcript->course->level ?? $transcript->student->level;
+        $normalizedLevel = $level === null
+            ? null
+            : strtolower(trim((string) $level));
 
-        if (in_array((string) $level, ['1', '2', '3', '4', '5', '8', '9'], true)) {
+        if (is_numeric($normalizedLevel)) {
+            $normalizedLevel = (string) (int) $normalizedLevel;
+        }
+
+        if (in_array($normalizedLevel, ['1', '2', '3', '4', '5', '8', '9'], true)) {
             return 'certificate-transcript';
         }
 
-        if ((string) $level === '6') {
+        if (in_array($normalizedLevel, ['6', 'associate', 'associate degree', 'associate-degree'], true)) {
             return 'associate-degree';
         }
 
-        if ((string) $level === '7') {
+        if (in_array($normalizedLevel, ['7', 'bachelor', 'bachelors', 'bachelor degree', 'bachelors degree'], true)) {
             return 'bachelors-single';
         }
 
